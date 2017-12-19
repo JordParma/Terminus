@@ -1,0 +1,229 @@
+---
+title: "488 Catapult Design"
+author: "Johnny Froehlich"
+date: "May 28, 2016"
+output: 
+  md_document: 
+    toc: yes
+runtime: shiny
+---
+
+```{r global_options, include=FALSE}
+#suppress the warnings and other messages from showing in the knitted file.
+knitr::opts_chunk$set(fig.width=8, fig.height=6, fig.path='Figs/',
+                      echo=TRUE, warning=FALSE, message=FALSE)
+```
+
+```{r Load Packages, message=FALSE, warning=FALSE, echo=FALSE}
+
+# Load required packages.
+library("AlgDesign")
+library("DoE.base")
+library("FrF2")
+library("lestat")
+library("knitr")
+library("rmarkdown")
+
+```
+
+```{r Variable Declaration, message=FALSE, warning=FALSE, echo=FALSE}
+## Read data and save relevant variables.
+m = matrix(scan("exruns.dat"),ncol=7,byrow=T)
+
+travel = m[,6]
+order = m[,7]
+
+## Declare variables as factors.
+angle = as.factor(m[,2])
+srate = as.factor(m[,3])
+pull = as.factor(m[,4])
+mass = as.factor(m[,5])
+
+## Save numeric variables and interactions. (Version only includes 2-way interactions)
+a = m[,2]
+b = m[,3]
+c = m[,4]
+d = m[,5]
+cd = c*d
+bc = b*c
+bd = b*d
+ab = a*b
+ac = a*c
+ad = a*d
+
+df = data.frame(angle,srate,pull,mass,travel,order,a,b,c,d,cd,bc,bd,ab,ac,ad)
+```
+
+#  **Design Overview**
+
+## **Build Design**
+
+The projectile is fired using a spring-loaded tube launcher (see Figure 1). The design consist of an internal compression spring and holster mechanism. The user applies a load (P) to the spring by pulling back on the handle a distance (δ). Once released, the generated spring force (Fs) launches the projectile a distance (x).
+
+## **Experimental Design**
+
+The design matrix, with measured travel distance responses, appears below. The actual randomized run order is given in the last column.
+
+Run	| angle | spring| pull|  mass	|travel	|Run Order|
+----|-------|-------|-----|-------|-------|---------|
+1	  |-1	    |-1	    |-1	  |-1	    |5	    |5
+2	  |1	    |-1	    |-1	  |-1	    |10	    |1
+3	  |-1	    |1	    |-1	  |-1	    |8	    |17
+4	  |1		  |1      |-1	  |-1     |	15    |	6
+5	  |-1	    |-1	    |1	  |-1	    |23	    |16
+6	  |1	    |-1	    |1	  |-1 	  |32	    |8
+7	  |-1	    |1	    |1	  |-1	    |12     |19
+8	  |1	    |1	    |1	  |-1	    |4	    |7
+9	  |-1	    |-1	    |-1	  |1	    |8	    |18
+10	|1	    |-1	    |-1	  |1	    |10	    |10
+11	|-1	    |1	    |-1	  |1	    |16	    |20
+12  |1	    |1	    |-1	  |1	    |40    	|9
+13	|-1	    |-1	    |1	  |1	    |36	    |3
+14	|1	    |-1	    |1	  |1	    |47   	|13
+15	|-1	    |1	    |1	  |1 	    |6	    |11
+16	|1	    |1	    |1	  |1	    |11	    |15
+
+## **Description of Experiment: Response and Factors**
+
+**Purpose**: To determine the effect of launch angle, pull distance, spring constant, and mass factors on projectile range. 
+
+**Response variable** = mean (over 16 repetitions) of the projectile distance 
+
+**Number of observations** = 16 (a complete 25 factorial design)
+
+- Response Variable Y = Mean (over 16 reps) of projectile distance 
+- Factor 1 = Angle (2 levels: Low (30 degrees) and High (60 degrees)) 
+- Factor 2 = Pull Distance (2 levels: Low (10 in) and High (20 in)) 
+- Factor 3 = Spring Constant (2 levels: Low (0.05 lbs/in) and High (0.09 lbs/in)) 
+- Factor 4 = mass (2 levels: Low (5 grams) and High (10 grams))  
+
+## **Design Concerns**
+
+#  **Experimental Methods**
+
+## **Data Collection**
+
+## **Randomization**
+
+#  **Results**
+
+#  **Post Analysis**
+
+Started by plotting the response data several ways to see if any trends or anomalies appear that would not be accounted for by the standard linear response models. First, we looked at the distribution of the response variable regardless of factor levels by generating the following four plots. The first plot is a normal probability plot of the response variable. The red line is the theoretical normal distribution. The second plot is a box plot of the response variable. The third plot is a histogram of the response variable.The fourth plot is the response versus the run order.
+
+Clearly there is "structure" that we hope to account for when we fit a response model. For example, the response variable is separated into two roughly equal-sized clumps in the histogram. The first clump is centered approximately around the value () while the second clump is centered approximately around the value (). As hoped for, the run-order plot does not indicate a significant time effect.
+
+```{r Plots and figures, message=FALSE, warning=FALSE, echo=FALSE}
+# Generate plots for analysis.
+par(bg=rgb(1,1,0.8), mfrow=c(2,2))
+# Normal Probability Plot
+qqnorm(travel)
+qqline(travel, col = 2)
+boxplot(travel, horizontal=TRUE, main="Box Plot", xlab="Travel")
+# Histogram of response variable.
+hist(travel, main="Histogram", xlab="Travel")
+# Response vs Run Order. Note: Run-order plot does not indicate a significant time effect. 
+plot(order, travel, xlab="Actual Run Order", ylab="Travel",
+     main="Run Order Plot")
+par(mfrow=c(1,1))
+```
+
+Next, we look at box plots of the response for each factor.
+
+```{r response boxplots, message=FALSE, warning=FALSE, echo=FALSE }
+# Boxplots of response variable for each factor. 
+par(bg=rgb(1,1,0.8),mfrow=c(2,3))
+boxplot(travel~angle, data=df, main="Travel by Angle",
+        xlab="Angle",ylab="Travel")
+boxplot(travel~srate, data=df, main="Travel by Spring Rate",
+        xlab="Spring Rate",ylab="Travel")
+boxplot(travel~pull, data=df, main="Travel by Pull Distance",
+        xlab="Pull Distance",ylab="Travel")
+boxplot(travel~mass, data=df, main="Travel by Mass",
+        xlab="Mass",ylab="Travel")
+par(mfrow=c(1,1))
+```
+
+Several factors, most notably "" followed by "" and possibly "", appear to change the average response level.
+
+For a 2^4^ full factorial experiment we can fit a model containing a mean term, four main effect terms, six two-factor interaction terms, four three-factor interaction terms, and a four-factor interaction term (16 parameters). However, we start by assuming all four-factor interaction terms are non-existent. It's very rare for such high-order interactions to be significant, and they are very difficult to interpret from an engineering viewpoint. The assumption allows us to accumulate the sums of squares for these terms and use them to estimate an error term. We start with a theoretical model with 15 unknown constants, hoping the data will clarify which of these are the significant main effects and interactions we need for a final model.
+
+The ANOVA table for the 15-parameter model (intercept not shown) follows.
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+## Fit a model with up to third order interactions.
+q = aov(travel~(angle+srate+pull+mass)^3,data=df)
+qsum <-summary(q)
+```
+
+**Step-wise Regression**
+
+Starting with the 14 terms, we use stepwise regression to eliminate unnecessary terms. By a combination of stepwise regression and the removal of remaining terms with a p-value larger than 0.05, we quickly arrive at a model with an intercept and 10 significant effect terms.
+
+```{r stepwise regression, message=FALSE, warning=FALSE, echo=FALSE }
+## Stepwise regression based on AIC.
+sreg = step(q,direction="backward")
+summary(sreg)
+
+# ## Remove non-significant terms from the stepwise model.
+# redmod = aov(formula = travel ~ angle + srate + pull + mass + angle:srate + angle:pull + angle:mass + srate:pull + srate:mass + pull:mass + angle:srate:pull + angle:srate:mass + srate:pull:mass)
+# summary.lm(redmod)
+# 
+# ## Print adjusted R squared.
+# summary.lm(redmod)$adj.r.squared
+
+## Fit a model with all effects.
+q = q = aov(travel~(angle+srate+pull+mass)^4,data=df)
+
+## Save effects in a vector, but remove intercept.
+qef = q$effects
+qef = qef[-1]
+
+## Sort effects and save labels.
+sef = qef[order(qef)]
+qlab = names(sef)
+
+## Leave off the two largest effects, Direction and Batch.
+# large = c(1,2)
+# sef = sef[-large]
+# qlab = qlab[-large]
+
+## Generate theoretical quantiles.
+ip = ppoints(length(sef))
+zp = qnorm(ip)
+
+```
+
+
+**Normal Plot of Effects**
+
+Non-significant effects should effectively follow an approximately normal distribution with the same location and scale. Significant effects will vary from this normal distribution. Therefore, another method of determining significant effects is to generate a normal probability plot of all 15. The effects that deviate substantially from the straight line fit to the data are considered significant. Although this is a somewhat subjective criteria.
+
+A normal probability plot of the effects is shown below. (To reduce the scale of the y-axis, the largest two effects, X4: X5: are not shown on the plot. In addition, these two effects were not used to compute the normal reference line.) The effects we consider to be significant are labeled. In this case, we have arrived at the exact same 12 terms by looking at the normal probability plot as we did from the stepwise regression.
+
+```{r normal probability Plot, message=FALSE, warning=FALSE, echo=FALSE }
+## Generate normal probability plot of all effects (excluding the
+## intercept).
+par(bg=rgb(1,1,0.8))
+plot(zp,sef, ylim=c(-120,70), xlim=c(-2,3),
+     ylab="Effect", xlab="Theoretical Quantiles",
+     main="Normal Probability Plot of Saturated Model Effects")
+qqline(sef, col=2)
+abline(h=0, col=4)
+text(-2,90,"poop",pos=4)
+
+## Add labels for largest 10 effects (two are not shown.
+small = c(6:(length(sef)-3))
+small2 = c((length(sef)-4):(length(sef)-3))
+text(zp[-small],sef[-small],label=qlab[-small],pos=4,cex=0.8)
+text(zp[small2],sef[small2],label=qlab[small2],pos=2,cex=0.8)
+par(mfrow=c(1,1))
+
+```
+
+#  **Conclusion**
+
+
+
+
+
